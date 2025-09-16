@@ -26,10 +26,6 @@ const Index = () => {
     console.log('Next level:', { chamado, level, observacao });
   };
 
-  const handlePreviousLevel = async (chamado: number, level: number, observacao: string) => {
-    console.log('Previous level:', { chamado, level, observacao });
-  };
-
   const updateStatusFinal = async (chamado: number, levelStatusKey: string, status: string) => {
     console.log('Update status:', { chamado, levelStatusKey, status });
   };
@@ -79,7 +75,6 @@ const Index = () => {
         chamadoData={mockData.chamadoData}
         formatTime={formatTime}
         onNextLevel={handleNextLevel}
-        onPreviousLevel={handlePreviousLevel}
         updateStatusFinal={updateStatusFinal}
         updateObservacao={updateObservacao}
       />

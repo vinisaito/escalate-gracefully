@@ -32,7 +32,6 @@ interface ModernTimerModalProps {
   chamadoData?: any;
   formatTime: (seconds: number) => string;
   onNextLevel: (chamado: number, level: number, observacao: string) => void;
-  onPreviousLevel: (chamado: number, level: number, observacao: string) => void;
   updateStatusFinal: (chamado: number, levelStatusKey: string, status: string) => void;
   updateObservacao: (chamado: number, level: number, observacao: string) => void;
 }
@@ -94,7 +93,6 @@ export const ModernTimerModal: React.FC<ModernTimerModalProps> = ({
   chamadoData,
   formatTime,
   onNextLevel,
-  onPreviousLevel,
   updateStatusFinal,
   updateObservacao
 }) => {
@@ -144,7 +142,7 @@ export const ModernTimerModal: React.FC<ModernTimerModalProps> = ({
     return true;
   }, [observacao]);
 
-  const handleAction = useCallback(async (action: 'next' | 'previous' | 'finish') => {
+  const handleAction = useCallback(async (action: 'next' | 'finish') => {
     if (!validateObservacao()) return;
 
     setIsProcessing(true);
@@ -152,7 +150,7 @@ export const ModernTimerModal: React.FC<ModernTimerModalProps> = ({
     try {
       const trimmedObservacao = observacao.trim();
 
-      if (finalizado && action !== 'previous') {
+      if (finalizado && action !== 'finish') {
         toast({
           title: "⚠️ Chamado já finalizado",
           description: "Não é possível alterar níveis pois o chamado está finalizado",
@@ -185,17 +183,6 @@ export const ModernTimerModal: React.FC<ModernTimerModalProps> = ({
           }
           break;
 
-        case 'previous':
-          if (currentLevel > 1) {
-            await onPreviousLevel(chamado, currentLevel - 1, trimmedObservacao);
-            const prevLevelInfo = LEVEL_INFO[(currentLevel - 1) as keyof typeof LEVEL_INFO];
-            toast({
-              title: `⬅️ Retornando para ${prevLevelInfo?.title}`,
-              description: `Timer reiniciado para ${prevLevelInfo?.title}`,
-            });
-          }
-          break;
-
         case 'finish':
           await Promise.all([
             updateStatusFinal(chamado, levelStatusKey, "finished"),
@@ -222,7 +209,7 @@ export const ModernTimerModal: React.FC<ModernTimerModalProps> = ({
     } finally {
       setIsProcessing(false);
     }
-  }, [validateObservacao, observacao, currentLevel, chamado, onNextLevel, onPreviousLevel, onClose, updateStatusFinal, updateObservacao, finalizado, levelStatusKey]);
+  }, [validateObservacao, observacao, currentLevel, chamado, onNextLevel, onClose, updateStatusFinal, updateObservacao, finalizado, levelStatusKey]);
 
   if (!levelInfo) return null;
 
@@ -308,6 +295,80 @@ export const ModernTimerModal: React.FC<ModernTimerModalProps> = ({
             />
           </div>
 
+          {/* Escalation History Section */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <Clock className="h-6 w-6 text-primary" />
+              <Label className="text-xl font-semibold text-foreground">
+                Histórico de Escalações
+              </Label>
+            </div>
+
+            <div className="bg-card rounded-xl border border-border p-6 max-h-64 overflow-y-auto">
+              <div className="space-y-4">
+                {Array.from({ length: currentLevel - 1 }, (_, index) => {
+                  const level = index + 1;
+                  const levelData = LEVEL_INFO[level as keyof typeof LEVEL_INFO];
+                  const LevelIcon = levelData?.icon || Clock;
+                  
+                  return (
+                    <div key={level} className="flex items-start gap-4 p-4 bg-muted/30 rounded-lg border border-border/50">
+                      <div className={cn(
+                        "p-2 rounded-lg bg-gradient-to-r text-white flex-shrink-0",
+                        levelData?.color || "from-gray-500 to-gray-600"
+                      )}>
+                        <LevelIcon className="h-5 w-5" />
+                      </div>
+                      
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-semibold text-foreground">
+                            {levelData?.title || `Nível ${level}`}
+                          </h4>
+                          <Badge variant="outline" className="text-xs">
+                            Concluído
+                          </Badge>
+                        </div>
+                        
+                        <p className="text-sm text-muted-foreground">
+                          {levelData?.description || "Escalação processada"}
+                        </p>
+                        
+                        {/* Mock observation data - in real app, this would come from chamadoData */}
+                        <div className="mt-3 p-3 bg-background/50 rounded-md border border-border/30">
+                          <p className="text-sm text-muted-foreground mb-1 font-medium">
+                            Observações registradas:
+                          </p>
+                          <p className="text-sm text-foreground">
+                            {chamadoData?.[`level${level}_observacao`] || 
+                             `Escalação ${level} processada - análise técnica realizada e encaminhamento efetuado conforme procedimentos estabelecidos.`}
+                          </p>
+                          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>
+                              {chamadoData?.[`level${level}_timestamp`] || 
+                               `Finalizado em ${new Date(Date.now() - (currentLevel - level) * 20 * 60 * 1000).toLocaleString('pt-BR')}`}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                {currentLevel === 1 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Clock className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">
+                      Nenhuma escalação anterior registrada.<br />
+                      Este é o primeiro nível de atendimento.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           <Separator />
 
           {/* Observations Section */}
@@ -353,34 +414,14 @@ export const ModernTimerModal: React.FC<ModernTimerModalProps> = ({
 
           {/* Action Buttons */}
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {/* Previous Level Button */}
-              {currentLevel > 1 && !finalizado && (
-                <Button
-                  variant="outline"
-                  size="xl"
-                  onClick={() => handleAction('previous')}
-                  disabled={!observacao.trim() || observacao.trim().length < 10 || isProcessing}
-                  className="h-20 border-2 hover:border-primary/50 transition-all duration-200"
-                >
-                  <ArrowLeft className="h-6 w-6 mr-3" />
-                  <div className="text-left">
-                    <div className="font-semibold text-base">Voltar Etapa</div>
-                    <div className="text-sm opacity-70">Retornar ao nível anterior</div>
-                  </div>
-                </Button>
-              )}
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Finish Button */}
               <Button
                 variant="warning"
                 size="xl"
                 onClick={() => handleAction('finish')}
                 disabled={!observacao.trim() || observacao.trim().length < 10 || isProcessing || finalizado}
-                className={cn(
-                  "h-20",
-                  currentLevel === 1 && "md:col-span-2 xl:col-span-2"
-                )}
+                className="h-20"
               >
                 <CheckCircle className="h-6 w-6 mr-3" />
                 <div className="text-left">
