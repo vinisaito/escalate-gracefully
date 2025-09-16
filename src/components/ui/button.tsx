@@ -15,11 +15,18 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        // Corporate Action Variants
+        timer: "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground hover:from-primary/90 hover:to-primary/80 shadow-lg hover:shadow-xl transition-all duration-200",
+        success: "bg-gradient-to-r from-success to-success/90 text-success-foreground hover:from-success/90 hover:to-success/80 shadow-lg hover:shadow-xl transition-all duration-200",
+        warning: "bg-gradient-to-r from-warning to-warning/90 text-warning-foreground hover:from-warning/90 hover:to-warning/80 shadow-lg hover:shadow-xl transition-all duration-200",
+        corporate: "bg-gradient-to-r from-primary to-info text-primary-foreground hover:from-primary/90 hover:to-info/90 shadow-lg hover:shadow-xl transition-all duration-200",
+        escalation: "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl transition-all duration-200",
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
+        xl: "h-14 rounded-lg px-10 text-base",
         icon: "h-10 w-10",
       },
     },
